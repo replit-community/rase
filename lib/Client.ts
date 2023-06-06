@@ -16,7 +16,7 @@ export class Client {
      * Delete a key from Replit Database
      * @param key Key name
      */
-    async removeKey(key: string) {
+    async delete(key: string) {
         await fetch(`${this.connectionUrl}/${encodeURIComponent(key)}`, {
             method: "DELETE",
         });
@@ -29,7 +29,7 @@ export class Client {
      * @param key Key name
      * @param value Key value
      */
-    async setKey(key: string, value: string) {
+    async set(key: string, value: string) {
         await fetch(`${this.connectionUrl}`, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -44,7 +44,7 @@ export class Client {
      * @param key Key name
      * @returns Parsed key value or null (if key not found)
      */
-    async getKey(key: string) {
+    async get(key: string) {
         const value = await fetch(
             `${this.connectionUrl}/${encodeURIComponent(key)}`
         ).then((res) => res.text());
@@ -89,7 +89,7 @@ export class Client {
      */
     async getPrefixData(prefix: string) {
         const prefixes = await this.getPrefix(prefix);
-        const data = await Promise.all(prefixes.map((key) => this.getKey(key)));
+        const data = await Promise.all(prefixes.map((key) => this.get(key)));
 
         return data;
     }
@@ -119,7 +119,7 @@ export class Client {
              * @param filter Keys & values that the target models should have
              * @returns A list of models that match the filter
              */
-            static async find(filter: Filter) {
+            static async find(filter: Filter = {}) {
                 return getMatches(filter);
             }
 
@@ -129,7 +129,7 @@ export class Client {
              * @returns Model (or null, if not found)
              */
             static async findById(id: string) {
-                const props = await client.getKey(`${modelName}.${id}`);
+                const props = await client.get(`${modelName}.${id}`);
                 return props ? toModel(props) : null;
             }
 
@@ -138,7 +138,7 @@ export class Client {
              * @param filter Keys & values that the target model should have
              * @returns Single model that matches the filter
              */
-            static findOne(filter: Partial<ModelSchema>) {
+            static findOne(filter: Partial<ModelSchema> = {}) {
                 return getMatch(filter);
             }
         }
@@ -162,15 +162,18 @@ export class Client {
                 `${modelName}.`
             )) as Array<ModelSchema>;
 
-            const match = matches.find((match) => {
-                for (const key in filter) {
-                    if (filter[key] !== match[key]) {
-                        return false;
-                    }
-                }
+            const match =
+                Object.keys(filter).length === 0
+                    ? matches[0]
+                    : matches.find((match) => {
+                          for (const key in filter) {
+                              if (filter[key] !== match[key]) {
+                                  return false;
+                              }
+                          }
 
-                return true;
-            });
+                          return true;
+                      });
 
             return match ? toModel(match) : null;
         }
@@ -185,17 +188,19 @@ export class Client {
                 `${modelName}.`
             )) as Array<ModelSchema>;
 
-            return matches
-                .filter((match) => {
-                    for (const key in filter) {
-                        if (filter[key] !== match[key]) {
-                            return false;
-                        }
-                    }
+            return (
+                Object.keys(filter).length === 0
+                    ? matches
+                    : matches.filter((match) => {
+                          for (const key in filter) {
+                              if (filter[key] !== match[key]) {
+                                  return false;
+                              }
+                          }
 
-                    return true;
-                })
-                .map(toModel);
+                          return true;
+                      })
+            ).map(toModel);
         }
 
         return Model;

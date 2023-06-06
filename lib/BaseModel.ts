@@ -12,9 +12,11 @@ export class BaseModel<ModelSchema extends BaseModelSchema = BaseModelSchema> {
         public client: Client,
         public props: z.infer<ModelSchema>
     ) {
-        if (!this.modelSchema.parse(this.props)) {
-            throw new Error("Properties do not conform with the model schema");
-        }
+        this.validate();
+    }
+
+    private validate() {
+        this.modelSchema.parse(this.props);
     }
 
     get(key: keyof typeof this.props) {
@@ -23,6 +25,7 @@ export class BaseModel<ModelSchema extends BaseModelSchema = BaseModelSchema> {
 
     set(key: keyof typeof this.props, value: (typeof this.props)[typeof key]) {
         this.props[key] = value;
+        this.validate();
 
         return this;
     }
@@ -32,13 +35,13 @@ export class BaseModel<ModelSchema extends BaseModelSchema = BaseModelSchema> {
     }
 
     async save() {
-        await this.client.setKey(this.selector, JSON.stringify(this.props));
+        await this.client.set(this.selector, JSON.stringify(this.props));
 
         return this;
     }
 
-    async remove() {
-        await this.client.removeKey(this.selector);
+    async delete() {
+        await this.client.delete(this.selector);
 
         return this;
     }
