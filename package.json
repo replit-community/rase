@@ -1,6 +1,5 @@
 {
-    "name": "database",
-    "private": true,
+    "name": "@replit-community/rase",
     "version": "0.0.0",
     "type": "module",
     "main": "./dist/database.js",
@@ -20,5 +19,24 @@
     },
     "dependencies": {
         "zod": "^3.21.4"
-    }
+    },
+    "description": "[![Try with Replit Badge](https://replit.com/badge?caption=Try%20with%20Replit)](https://replit.com/github/replit-community/rase)",
+    "directories": {
+        "lib": "lib"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/replit-community/rase.git"
+    },
+    "keywords": [
+        "replit",
+        "database",
+        "models"
+    ],
+    "author": "Nathan Pham <nathanpham.me@gmail.com>",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/replit-community/rase/issues"
+    },
+    "homepage": "https://github.com/replit-community/rase#readme"
 }
