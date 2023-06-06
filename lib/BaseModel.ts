@@ -14,8 +14,7 @@ export class BaseModel<ModelSchema extends BaseModelSchema = BaseModelSchema> {
         protected props: z.infer<ModelSchema>
     ) {
         if (!this.modelSchema.parse(this.props)) {
-            throw new Error("Invalid data");
-            // TODO: more descriptive error messages
+            throw new Error("Properties do not conform with the model schema");
         }
     }
 

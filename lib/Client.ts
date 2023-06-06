@@ -1,6 +1,6 @@
 import * as z from "zod";
 import { BaseModel, BaseModelSchema } from "./BaseModel";
-import { assert } from "../utils";
+import { assert } from "./utils";
 
 export class Client {
     private connectionUrl?: string;
