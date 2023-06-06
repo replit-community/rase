@@ -8,9 +8,9 @@ export class BaseModel<ModelSchema extends BaseModelSchema = BaseModelSchema> {
 
     constructor(
         public modelName: string,
-        public modelSchema: ModelSchema,
-        public client: Client,
-        public props: z.infer<ModelSchema>
+        protected modelSchema: ModelSchema,
+        protected client: Client,
+        protected props: z.infer<ModelSchema>
     ) {
         this.validate();
     }
