@@ -3,6 +3,7 @@ import { BaseModel, BaseModelSchema } from "./BaseModel";
 
 export class Client {
     private connectionUrl?: string;
+    private modelNames: string[] = [];
 
     /**
      * Set the cnnection url of the client
@@ -104,6 +105,13 @@ export class Client {
         modelName: string,
         modelSchema: ModelSchema
     ) {
+        // check if a model with the same name already exists
+        if (this.modelNames.includes(modelName)) {
+            throw new Error(`Model name ${modelName} already exists`);
+        }
+
+        this.modelNames.push(modelName);
+
         const client = this;
 
         type ModelProps = z.infer<typeof modelSchema>;
