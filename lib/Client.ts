@@ -1,6 +1,5 @@
 import * as z from "zod";
 import { BaseModel, BaseModelSchema } from "./BaseModel";
-import { assert } from "./utils";
 
 export class Client {
     private connectionUrl?: string;
@@ -18,12 +17,11 @@ export class Client {
      * @param key Key name
      */
     async removeKey(key: string) {
-        const response = await fetch(
-            `${this.connectionUrl}/${encodeURIComponent(key)}`,
-            { method: "DELETE" }
-        );
+        await fetch(`${this.connectionUrl}/${encodeURIComponent(key)}`, {
+            method: "DELETE",
+        });
 
-        assert(response.status === 200, "Failed to delete key");
+        return this;
     }
 
     /**
@@ -32,15 +30,13 @@ export class Client {
      * @param value Key value
      */
     async setKey(key: string, value: string) {
-        const formData = new FormData();
-        formData.append(key, value);
-
-        const response = await fetch(`${this.connectionUrl}`, {
+        await fetch(`${this.connectionUrl}`, {
             method: "POST",
-            body: formData,
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: encodeURIComponent(key) + "=" + encodeURIComponent(value),
         });
 
-        assert(response.status === 200, "Failed to set key");
+        return this;
     }
 
     /**
@@ -49,38 +45,53 @@ export class Client {
      * @returns Parsed key value or null (if key not found)
      */
     async getKey(key: string) {
-        const response = await fetch(
+        const value = await fetch(
             `${this.connectionUrl}/${encodeURIComponent(key)}`
-        );
+        ).then((res) => res.text());
 
-        if (response.status === 200) {
-            const value = await response.json();
-            return value;
+        if (!value) {
+            return null;
         }
 
-        return null;
+        try {
+            const json = JSON.parse(value);
+            return json ?? null;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Get a list of keys that start with a given prefix
+     * @param prefix Prefix to use
+     * @returns List of full keys
+     */
+    async getPrefix(prefix: string): Promise<string[]> {
+        return fetch(
+            `${this.connectionUrl}?encode=true&prefix=${encodeURIComponent(
+                prefix
+            )}`
+        )
+            .then((res) => res.text())
+            .then((keys) =>
+                keys
+                    .trim()
+                    .split("\n")
+                    .map(decodeURIComponent)
+                    .filter((key) => key.length > 0)
+            );
     }
 
     /**
      * Get a list of values with keys that start with a given prefix
-     * @param prefix Key prefix
+     * @param prefix Prefix to use
      * @returns List of values
      */
-    async getPrefix(prefix: string) {
-        const formData = new FormData();
-        formData.append("prefix", prefix);
+    async getPrefixData(prefix: string) {
+        const prefixes = await this.getPrefix(prefix);
+        const data = await Promise.all(prefixes.map((key) => this.getKey(key)));
 
-        const response = await fetch(`${this.connectionUrl}`, {
-            method: "POST",
-            body: formData,
-        });
-
-        if (response.status === 200) {
-            const result = await response.json();
-            return result;
-        }
-
-        return [];
+        return data;
     }
 
     /**
@@ -147,7 +158,7 @@ export class Client {
          * @returns Single model that matches the filter
          */
         async function getMatch(filter: Filter): Promise<Model | null> {
-            const matches = (await client.getPrefix(
+            const matches = (await client.getPrefixData(
                 `${modelName}.`
             )) as Array<ModelSchema>;
 
@@ -170,7 +181,7 @@ export class Client {
          * @returns A list of models that match the filter
          */
         async function getMatches(filter: Filter): Promise<Array<Model>> {
-            const matches = (await client.getPrefix(
+            const matches = (await client.getPrefixData(
                 `${modelName}.`
             )) as Array<ModelSchema>;
 
@@ -190,18 +201,3 @@ export class Client {
         return Model;
     }
 }
-
-const client = new Client();
-
-const User = client.model(
-    "User",
-    z.object({
-        lmao: z.string(),
-    })
-);
-
-new User({
-    lmao: "lmao",
-})
-    .set("lmao", "sdf")
-    .save();

@@ -1,17 +1,16 @@
-import { v4 } from "uuid";
 import * as z from "zod";
 import { Client } from "./Client";
 
 export type BaseModelSchema = z.ZodObject<any>;
 
 export class BaseModel<ModelSchema extends BaseModelSchema = BaseModelSchema> {
-    _id = v4();
+    _id = createId();
 
     constructor(
         public modelName: string,
-        protected modelSchema: ModelSchema,
-        protected client: Client,
-        protected props: z.infer<ModelSchema>
+        public modelSchema: ModelSchema,
+        public client: Client,
+        public props: z.infer<ModelSchema>
     ) {
         if (!this.modelSchema.parse(this.props)) {
             throw new Error("Properties do not conform with the model schema");
@@ -43,4 +42,10 @@ export class BaseModel<ModelSchema extends BaseModelSchema = BaseModelSchema> {
 
         return this;
     }
+}
+
+function createId() {
+    return (
+        Date.now().toString(36) + Math.random().toString(36).substring(2)
+    ).substring(0, 16);
 }
