@@ -11,6 +11,8 @@ export class Client {
      */
     connect(connectionUrl: string) {
         this.connectionUrl = connectionUrl;
+
+        return this;
     }
 
     /**
@@ -154,7 +156,8 @@ export class Client {
              */
             static async findById(id: string) {
                 const props = await client.get(`${modelName}.${id}`);
-                return props ? toModel(props) : null;
+
+                return props ? toModel({ _id: id, ...props }) : null;
             }
 
             /**

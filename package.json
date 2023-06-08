@@ -8,17 +8,20 @@
         "dist/**"
     ],
     "scripts": {
+        "test": "vitest",
         "dev": "vite build --watch",
         "build": "tsc && vite build",
         "preview": "vite preview"
     },
     "devDependencies": {
         "@rollup/plugin-node-resolve": "^15.1.0",
+        "dotenv": "^16.1.4",
         "install": "^0.13.0",
         "terser": "^5.17.7",
         "typescript": "^4.9.3",
         "vite": "^4.0.0",
-        "vite-plugin-dts": "^2.3.0"
+        "vite-plugin-dts": "^2.3.0",
+        "vitest": "^0.32.0"
     },
     "dependencies": {
         "zod": "^3.21.4"
