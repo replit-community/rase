@@ -1,6 +1,6 @@
 # Rase
 
-[![Try with Replit Badge](https://replit.com/badge?caption=Try%20with%20Replit)](https://replit.com/github/replit-community/rase)
+[![Try with Replit Badge](https://replit.com/badge?caption=Try%20with%20Replit)](https://replit.com/@replit-community-dev/rase)
 
 Replit database client
 
@@ -43,6 +43,9 @@ await rase.getPrefixData("hello");
 
 // delete the key called "hello"
 await rase.delete("hello");
+
+// delete all keys in the database
+await rase.deleteAll();
 ```
 
 ### Models
@@ -60,7 +63,7 @@ const User = rase.model("User", z.object(
 ))
 ```
 
-Now, whenever we instantiate a new user model, we get nice type-hints and an error if we don't correctly satisfy the schema requireements.
+Now, whenever we instantiate a new user model, we get nice type-hints and an error if we don't correctly satisfy the schema requirements.
 
 ```ts
 // const user = new User({ username: "Hello World" });

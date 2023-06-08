@@ -4,7 +4,13 @@ import { Client } from "./Client";
 export type BaseModelSchema = z.ZodObject<any>;
 
 export class BaseModel<ModelSchema extends BaseModelSchema = BaseModelSchema> {
-    _id = createId();
+    _id = BaseModel.createId();
+
+    static createId() {
+        return (
+            Date.now().toString(36) + Math.random().toString(36).substring(2)
+        ).substring(0, 16);
+    }
 
     constructor(
         public modelName: string,
@@ -45,10 +51,4 @@ export class BaseModel<ModelSchema extends BaseModelSchema = BaseModelSchema> {
 
         return this;
     }
-}
-
-function createId() {
-    return (
-        Date.now().toString(36) + Math.random().toString(36).substring(2)
-    ).substring(0, 16);
 }
