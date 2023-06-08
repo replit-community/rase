@@ -6,7 +6,7 @@ export class Client {
     private modelNames: string[] = [];
 
     /**
-     * Set the cnnection url of the client
+     * Set the connection url of the client
      * @param connectionUrl Connection url
      */
     connect(connectionUrl: string) {
