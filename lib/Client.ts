@@ -101,14 +101,12 @@ export class Client {
      * @returns List of values
      */
     async getPrefixData(prefix: string) {
-        const prefixKeys = await this.getPrefix(prefix);
-        const prefixData = await Promise.all(
-            prefixKeys.map((key) => this.get(key))
-        );
+        const keys = await this.getPrefix(prefix);
+        const data = await Promise.all(keys.map((key) => this.get(key)));
 
-        return prefixData.map((data, i) => ({
-            _id: prefixKeys[i],
-            ...data,
+        return data.map((row, i) => ({
+            ...row,
+            _id: BaseModel.formatId(keys[i]),
         }));
     }
 
@@ -122,9 +120,9 @@ export class Client {
         modelName: string,
         modelSchema: ModelSchema
     ) {
-        type PrefixData = ModelSchema & { _id: string };
         type ModelProps = z.infer<typeof modelSchema>;
-        type ModelFilter = Partial<ModelSchema>;
+        type ModelData = ModelProps & { _id: string };
+        type ModelFilter = Partial<ModelProps>;
 
         const client = this;
 
@@ -138,6 +136,11 @@ export class Client {
         class Model extends BaseModel {
             constructor(props: ModelProps) {
                 super(modelName, modelSchema, client, props);
+
+                if ("_id" in props) {
+                    this._id = props._id;
+                    delete props._id;
+                }
             }
 
             /**
@@ -155,9 +158,12 @@ export class Client {
              * @returns Model (or null, if not found)
              */
             static async findById(id: string) {
-                const props = await client.get(`${modelName}.${id}`);
+                const selector = `${modelName}.${id}`;
+                const props = await client.get(selector);
 
-                return props ? toModel({ _id: id, ...props }) : null;
+                return props
+                    ? toModel({ _id: BaseModel.formatId(id), ...props })
+                    : null;
             }
 
             /**
@@ -165,7 +171,7 @@ export class Client {
              * @param filter Keys & values that the target model should have
              * @returns Single model that matches the filter
              */
-            static findOne(filter: Partial<ModelSchema> = {}) {
+            static findOne(filter: ModelFilter = {}) {
                 return getMatch(filter);
             }
         }
@@ -175,23 +181,20 @@ export class Client {
          * @param props JSON data
          * @returns Model
          */
-        function toModel({ _id, ...props }: PrefixData) {
-            const model = new Model(props);
-            model._id = _id;
-
-            return model;
+        function toModel(props: ModelData) {
+            return new Model(props);
         }
 
         /**
          * Get a model that matches the filter
-         * @param filter Keys & values that the target model should have
+         * @param filters Keys & values that the target model should have
          * @returns Single model that matches the filter
          */
-        async function getMatch(filter: ModelFilter): Promise<Model | null> {
-            const matches = await client.getPrefixData(`${modelName}.`);
-            const match = matches.find((match) => {
-                for (const key in filter) {
-                    if (filter[key] !== match[key]) {
+        async function getMatch(filters: ModelFilter): Promise<Model | null> {
+            const allMatches = await client.getPrefixData(`${modelName}.`);
+            const match = allMatches.find((match) => {
+                for (const key in filters) {
+                    if (filters[key] !== match[key]) {
                         return false;
                     }
                 }
@@ -204,25 +207,23 @@ export class Client {
 
         /**
          * Get a list of models that match the filter
-         * @param filter Keys & values that the target models should have
+         * @param filters Keys & values that the target models should have
          * @returns A list of models that match the filter
          */
-        async function getMatches(filter: ModelFilter): Promise<Array<Model>> {
-            const matches = await client.getPrefixData(`${modelName}.`);
+        async function getMatches(filters: ModelFilter): Promise<Array<Model>> {
+            const allMatches = await client.getPrefixData(`${modelName}.`);
 
-            return (
-                Object.keys(filter).length === 0
-                    ? matches
-                    : matches.filter((match) => {
-                          for (const key in filter) {
-                              if (filter[key] !== match[key]) {
-                                  return false;
-                              }
-                          }
+            return allMatches
+                .filter((match) => {
+                    for (const key in filters) {
+                        if (filters[key] !== match[key]) {
+                            return false;
+                        }
+                    }
 
-                          return true;
-                      })
-            ).map(toModel);
+                    return true;
+                })
+                .map(toModel);
         }
 
         return Model;

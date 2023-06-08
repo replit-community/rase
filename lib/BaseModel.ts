@@ -12,6 +12,12 @@ export class BaseModel<ModelSchema extends BaseModelSchema = BaseModelSchema> {
         ).substring(0, 16);
     }
 
+    static formatId(id?: string) {
+        const _id = id?.split(".").pop();
+
+        return _id || BaseModel.createId();
+    }
+
     constructor(
         public modelName: string,
         protected modelSchema: ModelSchema,
